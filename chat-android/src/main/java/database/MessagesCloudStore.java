@@ -15,37 +15,33 @@ import java.util.function.Consumer;
  * Created by mladen on 9/23/17.
  */
 
-public class MessagesPersistentStore<T> {
+public class MessagesCloudStore implements com.mk.chat.core.data_containers.MessagesCloudStore {
 
-    Set<Consumer<MessageData<T>>> newMessageSubscribers = new HashSet<>();
-    Set<Consumer<MessageData<T>>> messageEditedSubscribers = new HashSet<>();
-    Set<Consumer<MessageData<T>>> messageDeletedSubscribers = new HashSet<>();
-
-    int idForNext = 0;
+    Set<Consumer<MessageData>> newMessageSubscribers = new HashSet<>();
+    Set<Consumer<MessageData>> messageEditedSubscribers = new HashSet<>();
+    Set<Consumer<MessageData>> messageDeletedSubscribers = new HashSet<>();
 
     DataConverter dataConverter = new DataConverter();
     DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference("messages");
 
-    public void subscribe_NewMessage(Consumer<MessageData<T>> subscriber){
+    public void subscribe_NewMessage(Consumer<MessageData> subscriber){
         newMessageSubscribers.add(subscriber);
     }
 
-    public void subscribe_MessageEdited(Consumer<MessageData<T>> subscriber){
+    public void subscribe_MessageEdited(Consumer<MessageData> subscriber){
         messageEditedSubscribers.add(subscriber);
     }
 
-    public void subscribe_MessageDeleted(Consumer<MessageData<T>> subscriber){
+    public void subscribe_MessageDeleted(Consumer<MessageData> subscriber){
         messageDeletedSubscribers.add(subscriber);
     }
 
-    public void persist(MessageData<T> messageData, Runnable onComplete, Runnable onFailure){
+    public void persist(MessageData messageData, Runnable onComplete, Runnable onFailure){
 
         rootRef.push().setValue(dataConverter.messageToDb(messageData))
                 .addOnCompleteListener(command -> {
                     if(onComplete != null)
                         onComplete.run();
-                    messageData.setIsOnline(idForNext);
-                    idForNext++;
                 })
                 .addOnFailureListener(command -> {
                     if(onFailure != null)
@@ -53,7 +49,7 @@ public class MessagesPersistentStore<T> {
                 });
     }
 
-    public void getAllMessages(Consumer<MessageData<T>> onComplete, Consumer<MessageData<T>> onFailure){
+    public void getAllMessages(Consumer<MessageData> onComplete, Consumer<MessageData> onFailure){
         rootRef.addListenerForSingleValueEvent(new ValueEventListener() {
             public void onDataChange(DataSnapshot dataSnapshot) {
 
